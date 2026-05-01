@@ -1,0 +1,10 @@
+// Recommended layout for agent-review.nvim.
+// Left pane: Neovim. Right pane: your coding agent.
+// The default Neovim transport moves focus right, then writes the comment payload.
+
+layout {
+    pane split_direction="vertical" {
+        pane command="nvim"
+        pane command="claude"
+    }
+}

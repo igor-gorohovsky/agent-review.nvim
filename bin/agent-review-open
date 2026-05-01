@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+socket="${AGENT_REVIEW_NVIM_SOCKET:-}"
+file=""
+pending=""
+fifo=""
+notes_file=""
+comments_file=""
+agent_name=""
+
+usage() {
+  cat >&2 <<'USAGE'
+Usage: agent-review-open --file PATH --pending PATH [options]
+
+Options:
+  --socket PATH         Neovim server socket. Defaults to $AGENT_REVIEW_NVIM_SOCKET
+                        or /tmp/nvim-agent-review-$ZELLIJ_SESSION_NAME.sock.
+  --fifo PATH           FIFO/file where the decision is written: allow or deny:<reason>.
+  --notes-file PATH     File where approve-with-note appends notes.
+  --comments-file PATH  File where review comments are appended on approve/decline.
+  --agent-name NAME     Display name for the agent.
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --socket) socket="${2:-}"; shift 2 ;;
+    --file) file="${2:-}"; shift 2 ;;
+    --pending) pending="${2:-}"; shift 2 ;;
+    --fifo) fifo="${2:-}"; shift 2 ;;
+    --notes-file) notes_file="${2:-}"; shift 2 ;;
+    --comments-file) comments_file="${2:-}"; shift 2 ;;
+    --agent-name) agent_name="${2:-}"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
+  esac
+done
+
+if [[ -z "$socket" && -n "${ZELLIJ_SESSION_NAME:-}" ]]; then
+  safe_session="$(printf '%s' "$ZELLIJ_SESSION_NAME" | tr -c '[:alnum:]_.-' '_')"
+  socket="/tmp/nvim-agent-review-${safe_session}.sock"
+fi
+
+if [[ -z "$socket" ]]; then
+  echo "No socket. Set --socket, AGENT_REVIEW_NVIM_SOCKET, or run inside zellij." >&2
+  exit 2
+fi
+if [[ -z "$file" || -z "$pending" ]]; then
+  echo "--file and --pending are required." >&2
+  usage
+  exit 2
+fi
+if [[ ! -S "$socket" ]]; then
+  echo "Socket not found: $socket" >&2
+  echo "Start Neovim with require('agent_review').setup(), then try again." >&2
+  exit 1
+fi
+
+export AR_FILE="$file"
+export AR_PENDING="$pending"
+export AR_FIFO="$fifo"
+export AR_NOTES_FILE="$notes_file"
+export AR_COMMENTS_FILE="$comments_file"
+export AR_AGENT_NAME="$agent_name"
+
+json="$(
+python3 - <<'PY'
+import json, os
+payload = {
+    "file": os.environ["AR_FILE"],
+    "pending": os.environ["AR_PENDING"],
+}
+optional = {
+    "fifo": os.environ.get("AR_FIFO", ""),
+    "notes_file": os.environ.get("AR_NOTES_FILE", ""),
+    "comments_file": os.environ.get("AR_COMMENTS_FILE", ""),
+    "agent_name": os.environ.get("AR_AGENT_NAME", ""),
+}
+for key, value in optional.items():
+    if value:
+        payload[key] = value
+print(json.dumps(payload))
+PY
+)"
+
+expr="$(
+JSON_PAYLOAD="$json" python3 - <<'PY'
+import json, os
+code = "require('agent_review').start(vim.json.decode(_A))"
+print("luaeval(%s, %s)" % (json.dumps(code), json.dumps(os.environ["JSON_PAYLOAD"])))
+PY
+)"
+
+nvim --server "$socket" --remote-expr "$expr" >/dev/null
