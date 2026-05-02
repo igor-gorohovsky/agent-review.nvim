@@ -9,8 +9,10 @@ M.defaults = {
 
   server = {
     enabled = true,
-    -- "auto" uses $AGENT_REVIEW_NVIM_SOCKET or /tmp/nvim-agent-review-$ZELLIJ_SESSION_NAME.sock.
-    socket = "auto",
+    -- Explicit socket path override. Can be a string or function(options).
+    socket_path = nil,
+    -- If socket_path is nil, derive socket from $ZELLIJ_SESSION_NAME.
+    auto_socket = true,
     socket_prefix = "nvim-agent-review-",
     socket_dir = "/tmp",
   },
@@ -63,13 +65,15 @@ function M.socket_path()
   local explicit_env = vim.env.AGENT_REVIEW_NVIM_SOCKET
   if nonempty(explicit_env) then return explicit_env end
 
-  local socket = server.socket
-  if type(socket) == "function" then
-    return socket(M.options)
+  local socket_path = server.socket_path
+  if type(socket_path) == "function" then
+    return socket_path(M.options)
   end
-  if socket and socket ~= "" and socket ~= "auto" then
-    return vim.fn.expand(socket)
+  if nonempty(socket_path) then
+    return vim.fn.expand(socket_path)
   end
+
+  if server.auto_socket == false then return nil end
 
   local session = vim.env.ZELLIJ_SESSION_NAME
   if nonempty(session) then

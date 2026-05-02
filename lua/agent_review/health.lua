@@ -45,7 +45,7 @@ function M.check()
       warn("Socket file does not exist yet. Run require('agent_review').setup() in Neovim.")
     end
   else
-    warn("No socket path configured. Set $AGENT_REVIEW_NVIM_SOCKET, configure server.socket, or run inside zellij.")
+    warn("No socket path configured. Set $AGENT_REVIEW_NVIM_SOCKET, configure server.socket_path, or run inside zellij.")
   end
 
   if vim.fn.executable("nvim") == 1 then

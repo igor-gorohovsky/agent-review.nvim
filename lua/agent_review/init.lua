@@ -160,7 +160,7 @@ end
 function M.serverstart()
   local socket = config.socket_path()
   if not socket then
-    return nil, "No socket configured. Set $AGENT_REVIEW_NVIM_SOCKET, run inside zellij, or configure server.socket."
+    return nil, "No socket configured. Set $AGENT_REVIEW_NVIM_SOCKET, run inside zellij, or configure server.socket_path."
   end
 
   vim.fn.mkdir(vim.fn.fnamemodify(socket, ":h"), "p")

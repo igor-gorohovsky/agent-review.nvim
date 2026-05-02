@@ -47,7 +47,8 @@ require("agent_review").setup({
 
   server = {
     enabled = true,
-    socket = "auto", -- $AGENT_REVIEW_NVIM_SOCKET or /tmp/nvim-agent-review-$ZELLIJ_SESSION_NAME.sock
+    socket_path = nil, -- explicit path or function(options); env var still wins
+    auto_socket = true, -- derive /tmp/nvim-agent-review-$ZELLIJ_SESSION_NAME.sock
   },
 
   transport = {
@@ -144,8 +145,8 @@ The script sends the request to the Neovim server socket created by `setup()`.
 Default socket resolution:
 
 1. `$AGENT_REVIEW_NVIM_SOCKET`
-2. configured `server.socket`
-3. `/tmp/nvim-agent-review-$ZELLIJ_SESSION_NAME.sock`
+2. configured `server.socket_path`
+3. `/tmp/nvim-agent-review-$ZELLIJ_SESSION_NAME.sock` when `server.auto_socket = true`
 
 Print the current socket path with:
 
