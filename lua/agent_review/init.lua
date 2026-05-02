@@ -178,7 +178,7 @@ function M.socket_path()
 end
 
 local commands_defined = false
-function M._define_commands()
+local function define_commands()
   if commands_defined then return end
   commands_defined = true
 
@@ -226,7 +226,7 @@ function M.setup(opts)
   config.setup(opts)
   configured = true
 
-  M._define_commands()
+  define_commands()
   require("agent_review.comments").setup()
   setup_autocmds()
   setup_keymaps()
