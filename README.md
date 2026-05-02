@@ -2,8 +2,6 @@
 
 Neovim UI for reviewing code changes proposed by terminal coding agents.
 
-This plugin was split out from a Claude-specific config, but the names and APIs are generic so it can be used with Claude Code, Qwen Code, custom agents, or any hook that can call a Neovim server.
-
 ## Features
 
 - Open an agent-proposed file edit in a diff tab.
@@ -16,18 +14,6 @@ This plugin was split out from a Claude-specific config, but the names and APIs 
 ## Installation
 
 With `lazy.nvim` from a local checkout:
-
-```lua
-{
-  dir = "~/projects/agent-review.nvim",
-  name = "agent-review.nvim",
-  config = function()
-    require("agent_review").setup()
-  end,
-}
-```
-
-Or from a remote repository later:
 
 ```lua
 {
