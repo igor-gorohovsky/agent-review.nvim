@@ -62,9 +62,6 @@ end
 
 function M.socket_path()
   local server = M.options.server or {}
-  local explicit_env = vim.env.AGENT_REVIEW_NVIM_SOCKET
-  if nonempty(explicit_env) then return explicit_env end
-
   local socket_path = server.socket_path
   if type(socket_path) == "function" then
     return socket_path(M.options)
@@ -72,6 +69,9 @@ function M.socket_path()
   if nonempty(socket_path) then
     return vim.fn.expand(socket_path)
   end
+
+  local explicit_env = vim.env.AGENT_REVIEW_NVIM_SOCKET
+  if nonempty(explicit_env) then return explicit_env end
 
   if server.auto_socket == false then return nil end
 
